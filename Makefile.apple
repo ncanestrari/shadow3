@@ -47,15 +47,15 @@
 #(in Ubuntu needs: sudo apt-get install gfortran-multilib )
 #32BITS=-m32
 
-#settings for linux
-SO=.so
-EXE=
-COMPILEOPT=-D_COMPILE4NIX
+#setings for linux
+#SO=.so
+#EXE=
+#COMPILEOPT=-D_COMPILE4NIX
 
 #settings for mac
-#SO=.dylib
-#EXE=
-#COMPILEOPT=-D_COMPILE4MAX
+SO=.dylib
+EXE=
+COMPILEOPT=-D_COMPILE4MAX
 
 #settings for windows
 #SO=.dll
@@ -67,51 +67,51 @@ COMPILEOPT=-D_COMPILE4NIX
 # customize compiler and flags
 #
 FC = gfortran
-STATIC=-static -static-libgfortran -static-libgcc
-FFLAGS=-cpp -fPIC -ffree-line-length-none $(32BITS) $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
-#FFLAGS=-cpp -fPIC -ffree-line-length-none $(32BITS) -O2 -fomit-frame-pointer $(COMPILEOPT)
-LINKFLAGS=$(32BITS) $(STATIC)
+STATIC = -static -static-libgfortran -static-libgcc
+#FFLAGS = -cpp -fPIC -ffree-line-length-none $(32BITS) $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
+FFLAGS = -cpp -fPIC -ffree-line-length-none $(32BITS) -O2 -fomit-frame-pointer $(COMPILEOPT)
+LINKFLAGS = $(32BITS) $(STATIC)
 
-#FC=g95
+#FC = g95
 #STATIC=-static
-#FFLAGS=-cpp -fPIC -ffree-line-length-huge $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
+#FFLAGS = -cpp -fPIC -ffree-line-length-huge $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
 
-#FC=x86_64-w64-mingw32-gfortran
+#FC = x86_64-w64-mingw32-gfortran
 #STATIC=-static -static-libgfortran -static-libgcc
-#FFLAGS=-cpp -ffree-line-length-none $(32BITS) $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
+#FFLAGS = -cpp -fPIC -ffree-line-length-none $(32BITS) $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
 
-#FC=i686-w64-mingw32-gfortran
+#FC = i686-w64-mingw32-gfortran
 #STATIC=-static -static-libgfortran -static-libgcc
-#FFLAGS=-cpp -fPIC -ffree-line-length-none $(32BITS) $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
+#FFLAGS = -cpp -fPIC -ffree-line-length-none $(32BITS) $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
 
 
-CC=gcc
-#CC=x86_64-w64-mingw32-gcc
-#CC=i686-w64-mingw32-gcc
+CC = gcc
+#CC = x86_64-w64-mingw32-gcc
+#CC = i686-w64-mingw32-gcc
 
-CXX=g++
-#CXX=x86_64-w64-mingw32-g++
-#CXX=i686-w64-mingw32-g++
+CXX = g++
+#CXX = x86_64-w64-mingw32-g++
+#CXX = i686-w64-mingw32-g++
 
-PY=python
+PY = python
 
 #-fopenmp -g
-CFLAGS=-fPIC $(32BITS)
+CFLAGS = -fPIC $(32BITS)
 #-fopenmp -g
 
 LIBFLAGS = -shared -lm 
 #-lpthread
 
-CPP=cpp -traditional
+CPP = cpp -traditional
 
 #-- MPI stuff
 
 #do not change this. Meant to be command line argument
 MPI=
-MPIFC=mpif90
+MPIFC = mpif90
 #overwrite compilers
-#CC=gcc-mp-4.4
-#CXX=g++-mp-4.4
+#CC = gcc-mp-4.4
+#CXX = g++-mp-4.4
 
 ##-------------------------------------------------------------------------------
 ##                   END OF CUSTOMIZABLE SECTION

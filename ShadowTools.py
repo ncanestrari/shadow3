@@ -1,5 +1,5 @@
 import numpy as np
-import Shadow as sd
+import ShadowMain as sd
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib import figure as matfig

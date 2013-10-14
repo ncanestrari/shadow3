@@ -53,36 +53,34 @@ Tools:
   Makefile:  makefile 
 
 Source files: 
-  shadow_kernel_precpp.F90
-  shadow_version_precpp.F90
-  shadow_variables_precpp.F90
+	shadow_version.F90 
+	shadow_globaldefinitions.F90 
+	stringio.F90 
+	gfile.F90 
+	shadow_beamio.F90 
+	shadow_math.F90 
+	shadow_variables.F90 
+	shadow_kernel.F90 
+	shadow_synchrotron.F90 
+	shadow_pre_sync.F90 
+	shadow_preprocessors.F90 
+	shadow_postprocessors.F90 
+	shadow_bind_f.F90 
+	shadow_crl.F90
 
-  gfile.f90		      
-  stringio.f90
-  shadow_pre_sync.f90
-  shadow_beamio.f90	      
-  shadow_synchrotron.f90
-  shadow_bind_f.f90	      
-  shadow_crl.f90		      
-  shadow_globaldefinitions.f90  
-  shadow_math.f90		      
-  shadow_postprocessors.f90     
-  shadow_preprocessors.f90      
-
-  cdf_z.f
-  wranc.c
+        cdf_z.f
+        wranc.c
 
 Source file main shadow3 program:
-  shadow3.f90		      
+  shadow3.F90		      
 
 Source file optional main programs (examples):
-  gen_source.f90		      
-  trace3.f90
-  trace3mpi.f90
-  trace.f90
-  example01_f95.f90	      
-  example02_f95.f90	      
-  fig3.f90		      
+  gen_source.F90		      
+  trace3.F90
+  trace3mpi.F90
+  trace.F90
+  example01_f95.F90	      
+  example02_f95.F90	      
 
 Source file API (C/C++/PYTHON/IDL)
   shadow_bind_idl.c	   

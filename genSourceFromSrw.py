@@ -16,7 +16,7 @@ if __name__ == '__main__':
     'm':'set method Multi Electron (ME) or Single Electron (SE).',
     'e':'select one energy or an energy range (two values separated by comma). [eV].',
     'c':'set simulation for canted undulator, value means distance between straight section and center of undulator. [m]',
-    'a':'set aperture. If SE is used the aperture of the convoluted distribution might differ from the single electron one, [m],[m]'
+    'a':'set aperture. If SE is used the aperture of the convoluted distribution might differ from the single electron one, [m],[m]', 
     'd':'set distance if you load stokes from ASCII file. [m]',
     }
 

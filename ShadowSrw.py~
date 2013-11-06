@@ -15,11 +15,8 @@ A2EV     =  50676.89919462
 #                             functions                                   #
 #=========================================================================#
 
-def LoadStokesFromSRW(fname, energy=None):
-  if open(fname+"_stk.dat").readline()[0]=='#':
-    stk = srwlib.loadStokesFromASCII(fname+"_stk.dat")
-  else:
-    stk = srwlib.loadStokes(fname)
+def LoadStokesHDF5(fname, energy=None):
+  stk = srwlib.loadStokes(fname)
   StokesDataBuffer = np.ndarray(shape=(4,stk.mesh.ny,stk.mesh.nx,stk.mesh.ne),buffer=stk.arS,dtype=stk.arS.typecode)
   if StokesDataBuffer.ndim==4: StokesData = StokesDataBuffer[0]
   if StokesData.dtype != np.float64: StokesData = np.asarray(StokesData,dtype=np.float64)
@@ -258,7 +255,7 @@ def genShadowBeam(fname,N=100000,method='ME',energy=None,lim=None,canted=None):
 
 
 def genShadowBeamME(fname,N=100000, energy=None):
-  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname,energy=energy)
+  data, mesh, hlp, ebeam = LoadStokesHDF5(fname,energy=energy)
   param = getParam(data,mesh,ebeam,N)
 
   if mesh.ne==1 and mesh.nx>1 and mesh.ny>1: #2 dim
@@ -297,7 +294,7 @@ def genShadowBeamME(fname,N=100000, energy=None):
   return beam, param
 
 def genShadowBeamSE(fname,N=100000,energy=None,lim=None,canted=None):
-  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname)
+  data, mesh, hlp, ebeam = LoadStokesHDF5(fname)
   param = getParam(data,mesh,ebeam,N)
 
   if mesh.ne==1 or mesh.ny==1 or mesh.nx==1: raise ValueError

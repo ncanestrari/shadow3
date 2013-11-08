@@ -70,7 +70,7 @@ FC = gfortran
 STATIC=-static -static-libgfortran -static-libgcc
 FFLAGS=-cpp -fPIC -ffree-line-length-none $(32BITS) $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
 #FFLAGS=-cpp -fPIC -ffree-line-length-none $(32BITS) -O2 -fomit-frame-pointer $(COMPILEOPT)
-LINKFLAGS=$(32BITS) $(STATIC)
+LINKFLAGS=$(32BITS) #$(STATIC)
 
 #FC=g95
 #STATIC=-static

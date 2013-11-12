@@ -40,7 +40,7 @@ if __name__ == '__main__':
   lim = [options.aperture[0],options.aperture[1]]
   #else:
   #  lim=None
-  beam,param = sd.ShadowSrw.genShadowBeam(options.infile,options.rays,options.method,energy=options.energy,lim=lim,canted=options.canted,options.distance)
+  beam,param = sd.ShadowSrw.genShadowBeam(options.infile,options.rays,options.method,energy=options.energy,lim=lim,canted=options.canted,distance=options.distance)
   beam.write(options.outfile)
   sd.ShadowSrw.WriteParameters(options.outfile+".py",param)
 

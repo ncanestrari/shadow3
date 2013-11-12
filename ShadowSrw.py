@@ -259,7 +259,7 @@ def genShadowBeam(fname,N=100000,method='ME',energy=None,lim=None,canted=None, d
 
 
 def genShadowBeamME(fname,N=100000, energy=None, distance=30.):
-  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname,energy=energy, distance)
+  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname, energy=energy, distance=distance)
   param = getParam(data,mesh,ebeam,N)
 
   if mesh.ne==1 and mesh.nx>1 and mesh.ny>1: #2 dim
@@ -270,7 +270,7 @@ def genShadowBeamME(fname,N=100000, energy=None, distance=30.):
     sys.stdout.write("done\n")
     sys.stdout.write("sampling CDFs for rays ")
     sys.stdout.flush()
-    Eph, zpph, ypph, xpph = GenRays2D(PHZP,PHXP,mesh,N)
+    Eph, xpph, ypph, zpph = GenRays2D(PHZP,PHXP,mesh,N)
     sys.stdout.write("done\n")
     del data, PHZP, PHXP
 
@@ -281,7 +281,7 @@ def genShadowBeamME(fname,N=100000, energy=None, distance=30.):
     sys.stdout.write("done\n")
     sys.stdout.write("sampling CDFs for rays ")
     sys.stdout.flush()
-    Eph, zpph, ypph, xpph = GenRays3D(PHZP,PHXP,PHE,mesh,N)
+    Eph, xpph, ypph, zpph = GenRays3D(PHZP,PHXP,PHE,mesh,N)
     sys.stdout.write("done\n")
     del data, PHZP, PHXP, PHE
 

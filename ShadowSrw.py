@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import h5py
 import copy
+import cPickle as pickle
 
 try:
   import srwlib
@@ -16,20 +17,29 @@ A2EV     =  50676.89919462
 #=========================================================================#
 
 def LoadStokesFromSRW(fname, energy=None, distance=30.):
-  if open(fname+"_stk.dat").readline()[0]=='#':
-    stk = srwlib.loadStokesFromASCII(fname+"_stk.dat")
-    stk.mesh.zStart = distance
+  if isinstance(fname,tuple):
+    stk, eBeam = fname
   else:
-    stk = srwlib.loadStokes(fname)
+    try:
+      if open(fname+"_stk.dat").readline()[0]=='#':
+        stk = srwlib.loadStokesFromASCII(fname+"_stk.dat")
+        stk.mesh.zStart = distance
+      else:
+        stk = srwlib.loadStokes(fname)
+    except AttributeError:
+      stk = pickle.load(open(fname+"_stk.dat","rb"))
+    try:
+      eBeam = srwlib.loadPartBeam(fname)
+    except AttributeError:
+      eBeam = pickle.load(open(fname+"_ebeam.dat","rb"))
   StokesDataBuffer = np.ndarray(shape=(4,stk.mesh.ny,stk.mesh.nx,stk.mesh.ne),buffer=stk.arS,dtype=stk.arS.typecode)
   if StokesDataBuffer.ndim==4: StokesData = StokesDataBuffer[0]
   if StokesData.dtype != np.float64: StokesData = np.asarray(StokesData,dtype=np.float64)
   StokesHeader = "imported over hdf5 file"
-  eBeam = srwlib.loadPartBeam(fname)
   try: order = list(f['order'].value)
   except: order = [0,1,2]
   StokesData = SetDataInOrder(StokesData,order)
-
+  
   if energy!=None:
     if energy<stk.mesh.eStart or energy>stk.mesh.eFin: raise ValueError
     e = np.linspace(stk.mesh.eStart,stk.mesh.eFin,stk.mesh.ne)
@@ -298,7 +308,7 @@ def genShadowBeamME(fname,N=100000, energy=None, distance=30.):
   return beam, param
 
 def genShadowBeamSE(fname,N=100000,energy=None,lim=None,canted=None,distance=30.):
-  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname, distance)
+  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname, energy=energy, distance=distance)
   param = getParam(data,mesh,ebeam,N)
 
   if mesh.ne==1 or mesh.ny==1 or mesh.nx==1: raise ValueError

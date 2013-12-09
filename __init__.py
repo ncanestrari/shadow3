@@ -1,22 +1,33 @@
-#import Shadow.ShadowLib as ShadowLib
 
+#
+# import to the main level the main objects first defined in C (ShadowLib) 
+# then extended in ShadowLibExtensions
+#
+from Shadow.ShadowLibExtensions import OE, Source, Beam 
+
+# Defined in C, not used at main level
+#from Shadow.ShadowLib import saveBeam, FastCDFfromZeroIndex, FastCDFfromOneIndex, FastCDFfromTwoIndex
+
+#
+# import optional packages: 
+#     ShadowTools: graphic application (plotxy, etc)
+#     ShadowPreprocessorsXraylib: preprocessors (bragg, etc) using Xraylib
+#     ShadowSrw: Srw+Shadow binding
+#
+import sys
 try:
-  import Shadow.ShadowSrw as ShadowSrw
+    import Shadow.ShadowTools as ShadowTools
 except ImportError:
-  print "h5py not present"
-  pass
+    print(sys.exc_info()[1]) 
+    pass
 try:
-  import Shadow.ShadowTools as ShadowTools
+    import Shadow.ShadowPreprocessorsXraylib as ShadowPreprocessorsXraylib
 except ImportError:
-  print "matplotlib not present"
-  pass
+    print(sys.exc_info()[1]) 
+    pass
 try:
-  import Shadow.ShadowPreprocessorsXraylib as ShadowPreprocessorsXraylib
-except ImportError:
-  print "xraylib not present"
-  pass
-from Shadow.ShadowMain import *
-#TODO
-#import ShadowLib 
-#from Shadow.ShadowMain import wstd, Beam, geometricSource
+    import Shadow.ShadowSrw as ShadowSrw
+except:
+    print(sys.exc_info()[1]) 
+    pass
 

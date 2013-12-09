@@ -17,7 +17,8 @@ Contents:
 
 SHADOW is an open source ray tracing code for modeling optical systems. 
 
-Targeted to synchrotron radiation beamlines, it has unique features for designing X-ray optical systems. 
+Targeted to synchrotron radiation beamlines, it has unique features for designing X-ray 
+optical systems. 
 
 For more info, please read this paper (open access):
 
@@ -101,15 +102,23 @@ Source file examples API (C/C++/PYTHON/IDL)
   shadow_bind_idl_test.pro
 
 README files:
-  README.txt
-  README_API.TXT
+  README.txt (this file)
+  README_API.txt 
   README_CRL.txt 
   README_MPI.txt 
-  README_ShadowTools.txt
+  README_PYTHON.txt
+  source.nml   (description of the source variables, as in start.00)
+  oe.nml       (description of the optical element variables, as in start.01)
+
+Data files: 
+  PRELIB1.DAT and PRELIB2.DAT (data file containg the oprical library)
+
+Directories:
+  PRIMER_INPUT_FILES  (script to run all the examples discussed in the Primer)
 
 4 Building SHADOW
 ----------------
-  Check the Makefile if you need to redefine compilers etc.
+  Check (edit) the Makefile if you need to redefine compilers etc.
 
   The use of Makefile is documented in its header. Basically:
   make           : builds shadow3 the main program

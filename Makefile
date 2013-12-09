@@ -5,15 +5,11 @@
 #
 # Usage:
 #       make  (or make shadow3): builds shadow3 binary 
-#       make lib        : builds shared libraries libshadow3*.so
-#       make libstatic  : builds static library libshadow3.a
-#       make examples   : compiles examples and tools using libraries:
-#                         examplesFortran: fortran examples statically linked
-#                         examplesMore: C and C++ examples dymamically linked
-#       make python     : creates python bind (uses shared libraries)
+#       make lib        : bulds libraries libshadow3*
+#       make examples   : compiles examples and tools using libshadow3*
+#       make python     : creates python bind
 #       make idl        : creates idl bind
-#       make preprocess : creates *.f90 files (to be exported to other platforms)
-#       make all        : make shadow3 examples python idl
+#       make all        : make shadow3 lib examples python idl
 #
 #       make clean      : cleans files created when running make
 #       make purge      : clean + removes files created by shadow3
@@ -36,6 +32,9 @@
 #     source /scisoft/ESRF_sw/opteron2/set_environment.tcsh
 #     use  FC=gfortran
 #
+#   in ESRF/kukulcan: 
+#     setenv LD_LIBRARY_PATH .
+#     use  FC=g95
 #
 
 
@@ -65,7 +64,6 @@ COMPILEOPT=-D_COMPILE4NIX
 
 #
 # customize compiler and flags
-#
 FC = gfortran
 STATIC=-static -static-libgfortran -static-libgcc
 FFLAGS=-cpp -fPIC -ffree-line-length-none $(32BITS) $(STATIC) -O2 -fomit-frame-pointer $(COMPILEOPT)
@@ -96,7 +94,7 @@ CXX=g++
 PY=python
 
 #-fopenmp -g
-CFLAGS=-fPIC $(32BITS)
+CFLAGS = -fPIC $(32BITS)
 #-fopenmp -g
 
 LIBFLAGS = -shared -lm 
@@ -142,6 +140,7 @@ FMODULES = \
 	shadow_beamio.F90 \
 	shadow_math.F90 \
 	shadow_variables.F90 \
+	shadow_roughness.F90 \
 	shadow_kernel.F90 \
 	shadow_synchrotron.F90 \
 	shadow_pre_sync.F90 \
@@ -165,15 +164,14 @@ OBJTESTS    = ${FTESTS:.F90=.o}
 shadow3: $(OBJFMODULES) shadow3.o 
 	$(FC) $(LINKFLAGS) -o shadow3$(EXE) shadow3.o $(OBJFMODULES) 
 
-
-
 #create .f90 files (see rule) and clean (remove lines starting with #) them using sed
 preprocess: $(FMODULESPRE) shadow3.f90
-
-#	for myfile in $(FMODULESPRE); do \
-#		echo "Removing lines starting with # in: " $$myfile ; \
-#		sed -i '/^#/d' $$myfile ; \
-#	done
+	for myfile in $(FMODULESPRE); do \
+		echo "Removing lines starting with # in: " $$myfile ; \
+		sed -i '/^#/d' $$myfile ; \
+	done
+	echo "Removing lines starting with # in: shadow3.f90"
+	sed -i '/^#/d' shadow3.f90 
 
 examples: examplesFortran  examplesMore
 
@@ -218,7 +216,7 @@ libstatic: $(OBJFMODULES) shadow_bind_c.o shadow_bind_cpp.o
 	#ar cr libshadow3c.a shadow_bind_c.o $(OBJFMODULES)
 	#ar cr libshadow3c++.a shadow_bind_c.o shadow_bind_cpp.o $(OBJFMODULES)
 
-idl: shadow_bind_idl.c shadow_bind_idl_loader.c shadow_bind_idl_loader.h idl_export.h shadow_bind_idl.dlm
+idl: lib shadow_bind_idl.c shadow_bind_idl_loader.c shadow_bind_idl_loader.h idl_export.h shadow_bind_idl.dlm
 	$(CC) $(CFLAGS) -c shadow_bind_idl_loader.c
 	$(CC) $(CFLAGS) -c shadow_bind_idl.c
 	$(CC) $(LIBFLAGS) -o shadow_bind_idl$(SO) -L. -lshadow3c shadow_bind_idl_loader.o shadow_bind_idl.o
@@ -238,6 +236,7 @@ shadow_version.F90: shadow_version.h
 shadow_version.h:
 # shadow_version.sh creates shadow_version.h including compilation info for current system
 	./shadow_version.sh $(FC)
+	./Makefile_use_precompiler shadow_version
 
 %.f90: %.F90
 	$(CPP) $(COMPILEOPT) $< -o $@
@@ -249,25 +248,39 @@ shadow_version.h:
 # cleaning 
 #
 clean:  
-	/bin/rm -f *.o *.mod *$(SO) *.a
+	/bin/rm -f *.o *.mod *$(SO) *.a *.dylib
 	/bin/rm -f version.txt
+
+# binaries
 	/bin/rm -f gen_source trace trace3 trace3mpi trace3_c trace3_cpp
 	/bin/rm -f shadow3$(EXE) example_shadow_format
-	/bin/rm -f example01_f95 example01_c example01_cpp 
+	/bin/rm -f example01_f95 example01_c example01_cpp example02_f95
 	/bin/rm -f example_standalone_mirror
+	/bin/rm -f ../bin/*
+
+# files created by the preprocessor
+#	/bin/rm -f tmp1.f90 tmp2.f90 tmp3.f90 tmp4.f90
+	/bin/rm -f tmp1_shadow_variables.f90 tmp2_shadow_variables.f90 
+	/bin/rm -f tmp1_shadow_kernel.f90 tmp2_shadow_kernel.f90 
+	/bin/rm -f tmp1_shadow_version.f90 tmp2_shadow_version.f90 
+	/bin/rm -f shadow_variables.f90 shadow_kernel.f90 shadow_version.f90
 	/bin/rm -f shadow_version.h
+
+# files created by python
 	/bin/rm -rf build *.pyc
 	/bin/rm -f *.f90 
 
 #shadow runs
 #examples runs
 purge: clean
+#shadow runs
 	/bin/rm -f start.* end.* begin.dat star.* mirr.* screen.* \
                    systemfile.* effic.* angle.* optax.* focus focnew*
 	/bin/rm -f plotxy* histo1* shadow3.inp xshwig.* 
 	/bin/rm -f SRANG SRDISTR SRSPEC epath.nml 
 	/bin/rm -f F12LIB.INDEX F12LIB.FULL 
 	/bin/rm -f testio.00 crl.01 final.01
+
 # customize depending on where you want to install
 install:
 	install libshado*$(SO) /usr/lib/
@@ -275,6 +288,9 @@ install:
 	install shadow3 /usr/bin/
 #	/bin/cp shadow3 /opt/scisoft/xop2.3/extensions/shadowvui/shadow3/shadow3
 #	/bin/cp shadow3 /scisoft/xop2.3/extensions/shadowvui/shadow-2.3.2m-linux/bin/shadow3
+#	$(PY) setup.py install
+#	/bin/cp libshado*.so /usr/lib/
+#	/bin/cp shadow3 /usr/bin/
 
 	
 

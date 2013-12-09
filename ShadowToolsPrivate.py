@@ -1,5 +1,5 @@
-import ShadowMain as sd
-import numpy as np
+import ShadowLibExtensions as sd
+import numpy 
 import matplotlib.pyplot as plt
 import matplotlib
 import os
@@ -133,6 +133,8 @@ def plotxy_CheckArg(beam,cols1,cols2,nbins,nbins_h,level,xrange,yrange,nolost,ti
 
 
 def setGoodRange(col):
+  if col.size == 0:
+      return [-1,1]
   rmin = min(col)
   rmax = max(col)
   if rmin>0.0:
@@ -152,11 +154,11 @@ def setGoodRange(col):
   return [rmin,rmax]
   
 def findIndex(xx,n,la,lb):  
-  return int( np.floor((xx-(lb-la)*0.5/n-la)*n/(lb-la)) )
+  return int( numpy.floor((xx-(lb-la)*0.5/n-la)*n/(lb-la)) )
   
 
 def calcFWHM(h,binSize):
-  t = np.where(h>max(h)*0.5)
+  t = numpy.where(h>max(h)*0.5)
   return binSize*(t[0][-1]-t[0][0]+1), t[0][-1], t[0][0]
 
 
@@ -174,12 +176,12 @@ def Histo1_write(title,bins,h,w,col,beam,ref):
   print >> file, "#UTTEXT"
   print >> file, "#C COLUMN 1 CORRESPONDS TO ABSCISSAS IN THE CENTER OF EACH BIN"
   print >> file, "#C COLUMN 2 CORRESPONDS TO ABSCISSAS IN THE THE LEFT CORNER OF THE BIN"
-  print >> file, "#C COLUMN 3 CORRESPONDS TO INTENSITY (WEIGHTED IF SELECTED)"
-  print >> file, "#C COLUMN 4 CORRESPONDS TO INTENSITY (COUNTING RAYS)"
+  print >> file, "#C COLUMN 3 CORRESPONDS TO INTENSITY (COUNTING RAYS)"
+  print >> file, "#C COLUMN 4 CORRESPONDS TO INTENSITY (WEIGHTED IF SELECTED)"
   print >> file, " "
   print >> file, "#S 1 histogram"
   print >> file, "#N 4" #N 4
-  print >> file, "#L "+getLabel(col)[1]+"  "+(getLabel(col))[1]+"  "+(getLabel(ref))[1]+"  "+"intensity (rays)"
+  print >> file, "#L "+getLabel(col)[1]+"  "+(getLabel(col))[1]+"  "+"intensity (rays)"+"  "+(getLabel(ref))[1]
   for i in range(len(h)):
     print >> file, "%f\t%f\t%f\t%f" % ( (bins[i]+bins[i+1])*0.5, bins[i], h[i], w[i] )
   file.close()

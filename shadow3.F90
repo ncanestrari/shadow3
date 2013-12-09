@@ -31,7 +31,7 @@ PROGRAM  Shadow3
 
   
   character(len=sklen)     ::  inCommand,inCommandLow,arg,mode
-  integer(kind=ski)      :: numArg,indx,iErr,i_Device
+  integer(kind=ski)      :: numArg,indx,iErr,i_Device, itmp
 
  
 inCommand = "" 
@@ -229,7 +229,17 @@ SELECT CASE (inCommandLow)
   ! CRL beta 2011-12-22 srio@esrf.eu - NOT YET LISTED UNDER ?
   ! TODO: list and clean 
   CASE ("precrl")
-     CALL precrl()
+     print *,'PRECRL: Create a stack of lenses: '
+     print *,'0 - single CRL'
+     print *,'1 - transfocator (stack of CRLs)'
+     itmp  = irint('?>')
+     select case(itmp)
+       case (0) 
+          CALL precrl()
+       case (1) 
+          CALL pretransfocator()
+       case default
+     end select
      inCommand=""
   CASE ("runcrl")
      CALL runcrl(0)
@@ -312,12 +322,12 @@ SELECT CASE (inCommandLow)
      !print *,'                    : input_source pre_mlayer grade_mlayer'
      print *,'                    : input_source pre_mlayer '
      print *,'                    : make_id epath nphoton undul_set undul_phot undul_cdf' 
-     print *,'                    : mkdatafiles' 
+     print *,'                    : jntpscalc mkdatafiles' 
      print *,'  [POST-PROCESSORS] : histo1 plotxy translate '
      print *,'                    : sourcinfo mirinfo sysinfo'
      print *,'                    : focnew intens recolor ffresnel ffresnel2d'
      print *,'                    : retrace minmax reflag histo3'
-     print *,'                    : prerefl_test'
+     print *,'                    : prerefl_test, pre_mlayer_scan'
      print *,'  [OTHER]           : exit help ? version license citation'
      print *,'  [OP SYSTEM ACCESS]: $<command>'
      print *,''
@@ -328,6 +338,22 @@ SELECT CASE (inCommandLow)
      inCommand="?"
   CASE ("prerefl_test")
      CALL prerefl_test()
+     inCommand=""
+  CASE ("pre_mlayer_scan")
+     CALL pre_mlayer_scan()
+     inCommand=""
+  CASE ("presurface_translate")
+     CALL presurface_translate()
+     inCommand=""
+  CASE ("wiggler_spectrum")
+     CALL wiggler_spectrum()
+     inCommand=""
+  CASE ("jntpscalc")
+     CALL jntpscalc()
+     inCommand=""
+  !undocumented, for test purposes only
+  CASE ("pspect_test")
+     CALL pspect_test()
      inCommand=""
   CASE DEFAULT
      IF (inCommand(1:1) == "$") THEN 

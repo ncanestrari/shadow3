@@ -36,7 +36,7 @@ Module shadow_PreProcessors
     !---- List of public overloaded functions ----!
     !---- List of public subroutines ----!
     public ::  presurface   
-    public ::  prerefl,pre_mlayer,grade_mlayer,bragg
+    public ::  prerefl,pre_mlayer,grade_mlayer,bragg,jntpscalc
 ! to create optical library files
     public ::  genlib, WriteF12LibIndex
 
@@ -1201,7 +1201,7 @@ SUBROUTINE Pre_Mlayer
           !call grade_mlayer(FGRADE)
           !FGRADE = RSTRING(' ')
           call grade_mlayer(fgrade)
-          WRITE(20,*) trim(FGRADE)
+          WRITE(20,'(a)') trim(FGRADE)
         ELSE IF (IGRADE.EQ.2) THEN
           WRITE(6,*) 'A second degree polynomial fit of the thickness grading'
           WRITE(6,*) 'must be available:'
@@ -1243,89 +1243,91 @@ SUBROUTINE Grade_Mlayer(outfile)
 
         character(len=sklen),intent(out) :: OUTFILE
         character(len=sklen) :: INFILE
-     	real(kind=skr),dimension(2,101,2,101) :: CSPL 
-     	real(kind=skr),dimension(20602)       :: WK 
-     	real(kind=skr),dimension(101)         :: X,Y
-     	real(kind=skr),dimension(101,101)     :: F
+        real(kind=skr),dimension(2,101,2,101) :: CSPL 
+        real(kind=skr),dimension(20602)       :: WK 
+        real(kind=skr),dimension(101)         :: X,Y
+        real(kind=skr),dimension(101,101)     :: F
 
-	WRITE(6,*) 'For a graded multilayer, you will specify the '
+        WRITE(6,*) 'For a graded multilayer, you will specify the '
         WRITE(6,*) 'factor MULTIPLYING the thickness'
-     	WRITE(6,*) 't and the gamma ratio, across the optical surface.'
-     	WRITE(6,*) 'In PRE_MLAYER, you have already defined the nominal'
+        WRITE(6,*) 't and the gamma ratio, across the optical surface.'
+        WRITE(6,*) 'In PRE_MLAYER, you have already defined the nominal'
         WRITE(6,*) ' t and gamma AT THE ORIGIN.  Here you will specify'
-	WRITE(6,*) 'their multiplication factor F(x,y).  For non-graded'
-	WRITE(6,*) 'multilayer, F(x,y) = 1.0.'
-	WRITE(6,*) '***************************************************'
+        WRITE(6,*) 'their multiplication factor F(x,y).  For non-graded'
+        WRITE(6,*) 'multilayer, F(x,y) = 1.0.'
+        WRITE(6,*) '***************************************************'
 
-	ITER	= 1
-     	OUTFILE	=   RSTRING ('Enter file-name for output: ')
-     	OPEN (21, FILE=OUTFILE, STATUS='UNKNOWN', FORM='UNFORMATTED')
-	REWIND (21)
+        ITER      = 1
+        OUTFILE      =   RSTRING ('Enter file-name for output: ')
+        OPEN (21, FILE=OUTFILE, STATUS='UNKNOWN', FORM='UNFORMATTED')
+        REWIND (21)
 
-15	WRITE(6,*) ' '
-	IF (ITER.EQ.1) THEN
-     	  INFILE = RSTRING ('File containing the t factor mesh : ')
-	ELSE
-	  INFILE = RSTRING ('File containing the gamma factor mesh : ')
-	END IF
+15      WRITE(6,*) ' '
+        IF (ITER.EQ.1) THEN
+          INFILE = RSTRING ('File containing the t factor mesh : ')
+        ELSE
+          INFILE = RSTRING ('File containing the gamma factor mesh : ')
+        END IF
 
-     	OPEN	(20, FILE=INFILE, STATUS='OLD', IOSTAT = IERR)
+        ! 20130917 srio@esrf.eu changed unit 20->40 because 20 is open in
+        ! pre_mlayer...
+        OPEN (40, FILE=INFILE, STATUS='OLD', IOSTAT = IERR)
 
-     	IF (IERR.NE.0) THEN
-     	  WRITE(6,*) 'Cannot access ',INFILE
-     	  IWHAT = IYES ('Retry ? ')
-     	 IF (IWHAT.EQ.1) GOTO 15
-     	  CALL EXIT
-     	END IF
-     	READ (20,*) NX, NY
-!     	IF (NX.GT.101.OR.NY.GT.101) THEN
-!     	  WRITE(6,*) 'Arrays too large. Maximum allowed is 101 points.'
-!     	  STOP 'Please retry with smaller arrays.'
-!     	END IF
-     	IF (NX.LT.4.OR.NY.LT.4) THEN
-     	  WRITE(6,*) 'Not enough points to define arrays. Must be at', &
-      		' least 4 points in each direction.'
-     	  STOP 'Please retry with larger arrays.'
-     	END IF
-     	WRITE(6,*) 'Setting up ',NX,' by ',NY,' array.'
+        IF (IERR.NE.0) THEN
+          WRITE(6,*) 'Cannot access ',INFILE
+          IWHAT = IYES ('Retry ? ')
+          IF (IWHAT.EQ.1) GOTO 15
+          CALL EXIT
+        END IF
+        READ (40,*) NX, NY
+!        IF (NX.GT.101.OR.NY.GT.101) THEN
+!        WRITE(6,*) 'Arrays too large. Maximum allowed is 101 points.'
+!        STOP 'Please retry with smaller arrays.'
+!        END IF
+        IF (NX.LT.4.OR.NY.LT.4) THEN
+          WRITE(6,*) 'Not enough points to define arrays. Must be at', &
+                 ' least 4 points in each direction.'
+          STOP 'Please retry with larger arrays.'
+        END IF
+        WRITE(6,*) 'Setting up ',NX,' by ',NY,' array.'
 !C
 !C Reads in Y array
 !C
-     	READ (20,*) (Y(I),I=1,NY)
+        READ (40,*) (Y(I),I=1,NY)
 !C
 !C Now read X and F arrays
 !C
-     	DO I=1,NX
-     	  READ (20,*) X(I),(F(I,J),J=1,NY)
-     	END DO
-     	CLOSE (20)
-     	WRITE(6,*) 'Array read correctly. Compute spline.'
+        DO I=1,NX
+          READ (40,*) X(I),(F(I,J),J=1,NY)
+        END DO
+        CLOSE (40)
+        WRITE(6,*) 'Array read correctly. Compute spline.'
 !C
 !C Call IMSL routine to compute spline
 !C
         iTmp=101
-     	CALL	IBCCCU ( F, X, NX, Y, NY, CSPL, iTmp, WK, IER)
-     	IF (IER.EQ.132) THEN
-     	  WRITE(6,*) 'The X and/or Y array are not ordered properly.',  &
+        CALL   IBCCCU ( F, X, NX, Y, NY, CSPL, iTmp, WK, IER)
+        IF (IER.EQ.132) THEN
+          WRITE(6,*) 'The X and/or Y array are not ordered properly.',  &
        'Please check data in '//trim(INFILE)
-     	 CALL EXIT
-     	END IF
-     	WRITE(6,*) 'Spline succesfully completed.'
-     	 WRITE (21)	NX, NY
-     	 WRITE (21)	X,Y
-	 DO 299 I = 1, NX
-	 DO 299 J = 1, NY
-     	 WRITE (21)	CSPL(1,I,1,J), CSPL(1,I,2,J),  &
-      		CSPL(2,I,1,J), CSPL(2,I,2,J)
-299	 CONTINUE
+          CALL EXIT
+        END IF
+        WRITE(6,*) 'Spline succesfully completed.'
+        WRITE (21)   NX, NY
+        WRITE (21)   X,Y
+        DO 299 I = 1, NX
+          DO 299 J = 1, NY
+          WRITE (21)   CSPL(1,I,1,J), CSPL(1,I,2,J),  &
+             CSPL(2,I,1,J), CSPL(2,I,2,J)
+299     CONTINUE
 
-	IF (ITER.EQ.1) THEN
-	  ITER   = 2
-	  GO TO 15
-	END IF
-	CLOSE	(21)
-     	WRITE(6,*) 'Task completed. Spline stored in ',OUTFILE
-     	RETURN
+        IF (ITER.EQ.1) THEN
+          ITER   = 2
+          GO TO 15
+        END IF
+        CLOSE (21)
+        WRITE(6,*) 'Task completed. Spline stored in ',OUTFILE
+        RETURN
 END SUBROUTINE Grade_Mlayer
 
 !
@@ -2375,6 +2377,168 @@ SUBROUTINE BRAGG
 	IF (I_AGAIN.EQ.1) GO TO 30
 20	CONTINUE
 END SUBROUTINE Bragg
+
+
+!c
+!c Program to prepare a file containing a joint 2D Gaussian power spectrum.
+!c
+SUBROUTINE JNTPSCALC
+implicit none
+        !IMPLICIT        REAL*8          (A-E,G-H,O-Z)
+        !IMPLICIT        INTEGER*4       (F,I-N)
+
+real(kind=skr)    :: X, Y, FXY, SIGX, SIGY
+real(kind=skr)    :: TY, TX, NORM, FXMAX, FYMAX
+real(kind=skr)    :: X0, Y0, conv
+real(kind=skr)    :: xstart,xend,xstep,ystart,yend,ystep
+integer(kind=ski) :: npointsx,npointsy,i_kind,i,j
+integer(kind=ski),parameter     :: N_DIM=10000
+real(kind=skr),dimension(N_DIM) ::    fx(N_DIM),fy(N_DIM),yy(N_DIM)
+character(len=sklen) :: file1,outfile
+
+        WRITE(6,*) 'File to use for output to SHADOW? '
+        READ(5,1001) outfile
+        OPEN (41,FILE=outfile,STATUS='UNKNOWN')
+1001        FORMAT (A)
+
+        WRITE(6,*) ' Please, input kind of Power Spectral Density you'
+        WRITE(6,*) ' want to generate: '
+        WRITE(6,*) ' [1] Gaussian power spectrum                   '
+        WRITE(6,*) ' [2] PSD from a profile with normal statistics and'
+        WRITE(6,*) '     Gaussian corr function'
+        WRITE(6,*) ' [3] PSD from a profile with normal statistics and'
+        WRITE(6,*) '     Exponential corr function'
+        WRITE(6,*) ' [4] PSD along Y from a data file and gaussian '
+        WRITE(6,*) '     along X'
+        READ(5,*) i_kind
+!c
+!c input parameters
+!c
+        if (i_kind.eq.1.or.i_kind.eq.2.or.i_kind.eq.3) then
+          WRITE(6,*) 'Number of points in y (along the mirror) and in'
+          WRITE(6,*) 'x (transversal): ? '
+          READ(5,*) npointsy,npointsx
+          WRITE(6,*) 'input start value and end value along Y axis : '
+          READ(5,*) ystart,yend
+          WRITE(6,*) 'input start value and end value along X axis : '
+          READ(5,*) xstart,xend
+          xstep = (xend - xstart)/float(npointsx-1)
+          ystep = (yend - ystart)/float(npointsy-1)
+        else if (i_kind.eq.4) then
+          WRITE(6,*) 'File with the PSD function (two columns) '
+          read (5,3333) file1
+3333        format(a)
+          WRITE(6,*) 'conversion factor from your units to cm [eg. 1e-4 from microns]:'
+          READ(5,*) conv
+          conv = 1.0D0/conv
+          WRITE(6,*) 'Number of points in x (along the mirror) ? '
+          READ(5,*) npointsx
+          WRITE(6,*) 'input start value and end value along X axis : '
+          READ(5,*) xstart,xend
+          xstep = (xend - xstart)/float(npointsx-1)
+          WRITE(6,*) 'input correlation lenght [microns] along X axis:'
+          READ(5,*) tx
+          tx   = tx*1.0d-4
+        endif
+
+        if (i_kind.eq.1) then
+         WRITE(6,*) 'input sigma along Y and X directions'
+         WRITE(6,*) '[frequency, cm-1] : '
+         READ(5,*) sigy,sigx
+         WRITE(6,*) 'input center along Y and X directions : '
+         READ(5,*) y0,x0
+        elseif (i_kind.eq.2.or.i_kind.eq.3) then
+         WRITE(6,*) 'for PSD in Y direction (along the mirror)'
+         WRITE(6,*) 'input roughness rms [Angstroms] and correlation length [microns]:'
+         READ(5,*) sigy,ty
+         WRITE(6,*) 'for PSD in X direction (transversal direction)'
+         WRITE(6,*) 'input roughness rms [Angstroms] and correlation length [microns]:'
+         READ(5,*) sigx,tx
+         sigx = sigx*1.0d-8
+         sigy = sigy*1.0d-8
+         tx   = tx*1.0d-4
+         ty   = ty*1.0d-4
+        endif
+!c
+!c prepare the PSD along Y and X
+!c
+        if (i_kind.eq.4) then
+        open (23,file=file1,status='old')
+          fymax = 0.0d0
+          do 121,i=1,N_DIM
+            read(21,*,end=122) yy(i),fy(i)
+                yy(i) = conv*yy(i)
+                WRITE(6,*) yy(i),fy(i)
+                if (fy(i).gt.fymax) fymax = fy(i)
+121          continue
+122        continue
+          close (23)
+          npointsy = i-1
+          ystart = yy(1)
+          yend   = yy(npointsy)
+        else
+        y = ystart
+        fymax = 0.0d0
+        do 22,i=1,npointsy
+          if (i_kind.eq.1) then
+            fy(i)=(1/(sqrt(2*pi)*sigy))*exp(-0.5d0*((y-y0)/sigy)**2)
+          else if (i_kind.eq.2) then 
+            fy(i)=sigy**2*sqrt(pi)*ty*exp(-(ty*y/2.0d0)**2)
+          else if (i_kind.eq.3) then
+                fy(i)= 2*pi*((sigy*ty)**2)*sqrt( 1.0d0/((1+(ty*y)*(ty*y))**3) )
+          endif
+          if (fy(i).gt.fymax) fymax=fy(i)
+          y = y + ystep
+22        continue
+        endif
+!c
+        x = xstart
+        fxmax = 0.0d0
+        do 11,i=1,npointsx
+          if (i_kind.eq.1) then
+            fx(i)=(1/(sqrt(2*pi)*sigx))*exp(-0.5d0*((x-x0)/sigx)**2)
+          else if (i_kind.eq.2)   then
+            fx(i)=sigx**2*sqrt(pi)*tx*exp(-(tx*x/2.0d0)**2)
+          else if (i_kind.eq.3)   then
+            fx(i)= 2*pi*((sigx*tx)**2)*sqrt( 1.0d0/((1+(tx*x)*(tx*x))**3) )
+          endif
+          if (fx(i).gt.fxmax) fxmax=fx(i)
+          x = x + xstep
+11        continue
+!c
+!c
+!c write output file
+!c
+        write (41,*) npointsx
+        write (41,*) xstart
+        write (41,*) xstep
+        write (41,*) npointsy
+        write (41,*) ystart
+        write (41,*) ystep
+!c
+        norm = 1/fxmax/fymax
+        write(6,*) 'pi: ',pi
+        write(6,*) 'sigx: ',sigx
+        write(6,*) 'sigy: ',sigy
+        write(6,*) 'npointsx: ',npointsx
+        write(6,*) 'xstart: ',xstart
+        write(6,*) 'xstep: ',xstep
+        write(6,*) 'npointsy: ',npointsy
+        write(6,*) 'ystart: ',ystart
+        write(6,*) 'ystep: ',ystep
+        WRITE(6,*) 'fxmax: ',fxmax
+        WRITE(6,*) 'fymax: ',fymax
+        WRITE(6,*) 'Normalization factor is: ',norm
+        DO 222 j = 1,npointsy
+        DO 111 i = 1,npointsx
+        FXY = FX(i)*FY(j)
+        WRITE (41,*) norm*FXY
+        FXY = 0
+  111        CONTINUE
+  222        CONTINUE
+        CLOSE (41)
+
+END SUBROUTINE JNTPSCALC
 
 !
 !

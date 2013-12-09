@@ -1,20 +1,4 @@
-/*
- * =====================================================================================
- *
- *       Filename:  shadow_bind_python.c
- *
- *    Description:  
- *
- *        Version:  1.0
- *        Created:  11/27/2012 11:44:07 AM
- *       Revision:  none
- *       Compiler:  gcc
- *
- *         Author:  YOUR NAME (), 
- *   Organization:  
- *
- * =====================================================================================
- */
+
 #include <stdlib.h>
 #include "shadow_bind_python.h"
 #include <float.h>

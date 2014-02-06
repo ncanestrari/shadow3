@@ -12,12 +12,6 @@ import os
 
 A2EV = 50676.89919462
 
-def closeAllFigures():
-  pylab.close('all')
-
-def closeLastFigure():
-  pylab.close()
-
 def getshonecol(beam,col):
   '''
   Extract a column from a shadow file (eg. begin.dat) or a Shadow.Beam instance. 

@@ -40,12 +40,19 @@ def LoadStokesFromSRW(fname, energy=None, distance=30.):
   except: order = [0,1,2]
   StokesData = SetDataInOrder(StokesData,order)
   
-  if energy!=None:
+  if energy is not None and not isinstance(energy,(list,tuple)):
     if energy<stk.mesh.eStart or energy>stk.mesh.eFin: raise ValueError
     e = np.linspace(stk.mesh.eStart,stk.mesh.eFin,stk.mesh.ne)
     i = np.where( abs(e-energy)==abs(e-energy).min() )
     StokesData = StokesData[:,:,i[0][0]]
     stk.mesh.ne = 1; stk.mesh.eStart = energy; stk.mesh.eFin = energy
+  #if isinstance(energy,(list,tuple)):
+  #  emin, emax = energy[0], energy[1]
+  #  if emin<stk.mesh.eStart or emax>stk.mesh.eFin: raise ValueError
+  #  e = np.linspace(stk.mesh.eStart,stk.mesh.eFin,stk.mesh.ne)
+  #  i = np.where( (e>emin)&(e<emax) )
+  #  StokesData = StokesData[:,:,i]
+  #  stk.mesh.ne = len(i[0]); stk.mesh.eStart = emin; stk.mesh.eFin = emax
 
   return StokesData, stk.mesh, StokesHeader, eBeam
 
@@ -261,17 +268,16 @@ def WriteParameters(fname,d):
 
 def genShadowBeam(fname,N=100000,method='ME',energy=None,lim=None,canted=None, distance=30.):
   if method=='ME':
-    return genShadowBeamME(fname,N,energy, distance)
+    return genShadowBeamME(fname,N,energy,lim,distance)
   elif method=='SE':
     return genShadowBeamSE(fname,N,energy,lim,canted,distance)
   else:
     raise AttributeError
 
 
-def genShadowBeamME(fname,N=100000, energy=None, distance=30.):
-  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname, energy=energy, distance=distance)
-  param = getParam(data,mesh,ebeam,N)
-
+def genShadowBeamME(fname,N=100000, energy=None, lim=None, distance=30.):
+  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname, distance=distance)
+  NEWN = N
   if mesh.ne==1 and mesh.nx>1 and mesh.ny>1: #2 dim
     data.shape = (mesh.ny, mesh.nx)
     sys.stdout.write("setting up CDFs from angular distribution ")
@@ -293,22 +299,55 @@ def genShadowBeamME(fname,N=100000, energy=None, distance=30.):
     sys.stdout.flush()
     Eph, xpph, ypph, zpph = GenRays3D(PHZP,PHXP,PHE,mesh,N)
     sys.stdout.write("done\n")
-    del data, PHZP, PHXP, PHE
+    while True:
+      if energy==None: break
+      index = np.where( (Eph<energy[0])|(Eph>energy[1]) )
+      if len(index[0])==0:
+        sys.stdout.write("\rrepeating simulation to fit energy range: %d Pass the Check Over %d"%(N,N))
+        break
+      NEWNE = len(index[0])
+
+      sys.stdout.write("\rrepeating simulation to fit energy range: %d Pass the Check Over %d"%(N-NEWNE,N))
+      sys.stdout.flush()
+      Eph[index], zpph[index], ypph[index], xpph[index] = GenRays3D(PHZP,PHXP,PHE,mesh,NEWNE)
+      NEWN += NEWNE
+      ypph[index] = np.sqrt(1.-xpph[index]**2-zpph[index]**2)
+
+    sys.stdout.write('\n')
+    del PHZP, PHXP, PHE
 
   sys.stdout.write("generating source size ")
   sys.stdout.flush()
   xe, ze = GenMacroElectronSimple(ebeam,N)
   sys.stdout.write("done\n")
 
+  sys.stdout.write("removing rays outside initial slit ")
+  sys.stdout.flush()
+  if lim is not None:
+    tof = mesh.zStart*1.e2/ypph
+    xph = xe + np.multiply(tof,xpph)
+    zph = ze + np.multiply(tof,zpph)
+    lim = [ lim[0]*2.0, lim[1]*2.0, mesh.zStart ] #elif -> exit from if/else, it does not enter to else.
+    index = np.where( (abs(xph)<lim[0]*0.5*1.e2) & (abs(zph)<lim[1]*0.5*1.e2) )
+    xe = xe[index] * 1.0
+    ze = ze[index] * 1.0
+    xpph = xpph[index] * 1.0
+    ypph = ypph[index] * 1.0
+    zpph = zpph[index] * 1.0
+    Eph = Eph[index] * 1.0
+    N = len(Eph)
+  sys.stdout.write("done\n")
   sys.stdout.write("copying to Beam ")
   sys.stdout.flush()
   beam = SetBeam(xe,ze,xpph,ypph,zpph,Eph,N)
+  param = getParam(data,mesh,ebeam,NEWN)
   sys.stdout.write("done\n")
-
+  del data
   return beam, param
+    
 
 def genShadowBeamSE(fname,N=100000,energy=None,lim=None,canted=None,distance=30.):
-  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname, energy=energy, distance=distance)
+  data, mesh, hlp, ebeam = LoadStokesFromSRW(fname, distance=distance)
   param = getParam(data,mesh,ebeam,N)
 
   if mesh.ne==1 or mesh.ny==1 or mesh.nx==1: raise ValueError
